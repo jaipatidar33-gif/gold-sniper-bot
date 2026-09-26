@@ -6,11 +6,9 @@ A,GOLD,15m,rej_day_lo,BUY,ny_am,month_end,bb_os,0.8333,1xATR
 A,GOLD,15m,fvg,BUY,ny_am,mid_month,vol_dn,0.8333,1xATR
 A,GOLD,15m,choch,SELL,overlap,mid_month,zscore_low,0.8235,1xATR
 A,GOLD,15m,hammer,BUY,ny_am,month_end,vwap_ext_up,0.8182,1xATR
-A,GOLD,15m,hammer,BUY,ny_am,month_end,above_vwap,0.8182,1xATR
 A,GOLD,30m,break_pdh,BUY,tokyo,mid_month,vol_up,0.8125,1xATR
 A,GOLD,15m,choch,SELL,ny_am,mid_month,weak_trend,0.8125,1xATR
 A,GOLD,15m,choch,SELL,overlap,month_start,vwap_ext_dn,0.8,1xATR
-A,GOLD,15m,choch,SELL,overlap,month_start,below_vwap,0.8,1xATR
 A,GOLD,15m,fvg,BUY,ny_am,mid_month,weak_trend,0.8,1xATR
 A,GOLD,5m,shooting_star,SELL,overlap,month_start,weak_trend,0.8,1xATR
 A,GOLD,15m,sweep_pwl,SELL,all,mid_month,sweep_pdl_f,0.8,1xATR
@@ -26,7 +24,6 @@ B,GOLD,30m,break,BUY,tokyo,month_start,none,0.75,1xATR
 C,GOLD,15m,bos,BUY,all,month_start,zscore_low,0.7463,1xATR
 C,GOLD,5m,break_pdl,SELL,all,month_end,bb_ob,0.7451,1xATR
 C,GOLD,5m,hammer,BUY,ny_am,mid_month,vwap_ext_dn,0.7447,1xATR
-C,GOLD,5m,hammer,BUY,ny_am,mid_month,below_vwap,0.7447,1xATR
 C,GOLD,30m,at_day_hi,BUY,tokyo,month_end,zscore_high,0.7447,1xATR
 C,GOLD,15m,engulf,SELL,overlap,month_start,none,0.7446,1xATR
 C,GOLD,5m,pullback,SELL,ny_pm,mid_month,none,0.7381,1xATR
