@@ -10,8 +10,7 @@ import requests
 TG_TOKEN = os.getenv("TG_TOKEN", "")
 TG_CHAT  = os.getenv("TG_CHAT_ID", "")
 TD_KEY   = os.getenv("TD_KEY", "")
-
-SYMBOLS = {"GOLD": "XAU/USD", "SILVER": "XAG/USD"}
+SYMBOLS = {"GOLD": "XAU/USD"}
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
