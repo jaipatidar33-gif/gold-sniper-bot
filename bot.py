@@ -485,8 +485,9 @@ def run_bot_loop():
     else:
         print("   No signals at start")
 
-    if not signals or not YF_OK:
-        return
+    if not signals:
+    return
+        
 
     print(f"👁️ Monitor loop for {RUN_DURATION_SEC // 60} min...")
     last_check = 0
