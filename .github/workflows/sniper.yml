@@ -2,7 +2,7 @@ name: Gold Sniper 24/7
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 concurrency:
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,3 +25,5 @@ jobs:
           TG_TOKEN:   ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           TD_KEY:     ${{ secrets.TD_KEY }}
+          ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE }}
+          RISK_PER_TRADE:  ${{ secrets.RISK_PER_TRADE }}
