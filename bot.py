@@ -1,20 +1,13 @@
 """
-GOLD SNIPER BOT v4.0 — FINAL
-- 33 setups | Market+Limit alerts | ATR SL/TP
-- DST shift | News blackout | 1-min monitor
-- Warnings | Priority queue | Auto lot size
+GOLD SNIPER BOT v4.1 — FINAL
+- 38 setups | Market+Limit alerts | ATR SL/TP
+- DST shift | News blackout | 1-min monitor (Twelve Data)
 """
 import os, time, traceback
 from datetime import datetime, timezone, timedelta
 import numpy as np
 import pandas as pd
 import requests
-
-try:
-    import yfinance as yf
-    YF_OK = True
-except ImportError:
-    YF_OK = False
 
 # ═══════════════════════════════════════════════════════════════
 TG_TOKEN = os.getenv("TG_TOKEN", "")
@@ -49,7 +42,6 @@ def escape_md(t):
         t = str(t).replace(ch, f"\\{ch}")
     return t
 
-
 def send(text):
     if not TG_TOKEN or not TG_CHAT:
         print("[TG]", text); return
@@ -61,7 +53,6 @@ def send(text):
         )
     except Exception as e:
         print(f"[TG ERROR] {e}")
-
 
 # ═══════════════════════════════════════════════════════════════
 # DST AUTO-SHIFT
@@ -76,7 +67,6 @@ def get_us_dst_offset(dt_utc):
     s1_nov = nov + timedelta(days=d)
     return -4 if s2_mar <= dt_utc < s1_nov else -5
 
-
 def get_uk_dst_offset(dt_utc):
     y = dt_utc.year
     mar = datetime(y, 3, 31, tzinfo=timezone.utc)
@@ -87,11 +77,9 @@ def get_uk_dst_offset(dt_utc):
     l_oct = oct_ - timedelta(days=d)
     return 1 if l_mar <= dt_utc < l_oct else 0
 
-
 def get_session_shift():
     now = datetime.now(timezone.utc)
     return (get_us_dst_offset(now) - (-5)), (get_uk_dst_offset(now) - 0)
-
 
 # ═══════════════════════════════════════════════════════════════
 # NEWS BLACKOUT
@@ -110,7 +98,6 @@ def get_news_events_today():
             events.append(datetime(y, m, d, 18, 0, tzinfo=timezone.utc))
     return events
 
-
 def is_news_blackout():
     now = datetime.now(timezone.utc)
     for ev in get_news_events_today():
@@ -118,7 +105,6 @@ def is_news_blackout():
         if -NEWS_BLACKOUT_MIN <= delta <= NEWS_BLACKOUT_MIN:
             return True, ev, delta
     return False, None, None
-
 
 # ═══════════════════════════════════════════════════════════════
 # DATA FEED
@@ -137,7 +123,6 @@ def fetch(symbol, interval, bars=300):
         df[c] = df[c].astype(float)
     return df
 
-
 def get_live_price(symbol="XAU/USD"):
     try:
         r = requests.get("https://api.twelvedata.com/price", params={
@@ -155,7 +140,6 @@ def get_live_price(symbol="XAU/USD"):
 # ═══════════════════════════════════════════════════════════════
 def ema(s, n): return s.ewm(span=n, adjust=False).mean()
 
-
 def atr(df, n=14):
     tr = pd.concat([df['high'] - df['low'],
                     (df['high'] - df['close'].shift()).abs(),
@@ -163,13 +147,11 @@ def atr(df, n=14):
                    axis=1).max(axis=1)
     return tr.ewm(alpha=1/n, adjust=False).mean()
 
-
 def rsi(c, n=14):
     d = c.diff()
     u = d.clip(lower=0).ewm(alpha=1/n, adjust=False).mean()
     dn = (-d.clip(upper=0)).ewm(alpha=1/n, adjust=False).mean()
     return 100 - 100 / (1 + u / dn.replace(0, np.nan))
-
 
 def adx(df, n=14):
     up = df['high'].diff(); dn = -df['low'].diff()
@@ -180,7 +162,6 @@ def adx(df, n=14):
     mdi = 100 * pd.Series(mdm, index=df.index).ewm(alpha=1/n, adjust=False).mean() / tr
     dx = 100 * (pdi - mdi).abs() / (pdi + mdi).replace(0, np.nan)
     return dx.ewm(alpha=1/n, adjust=False).mean()
-
 
 # ═══════════════════════════════════════════════════════════════
 # FEATURES
@@ -267,14 +248,12 @@ def build_features(df):
     df['none'] = True
     return df
 
-
 # ═══════════════════════════════════════════════════════════════
 def pattern_col(pat, side):
     fixed = ('hammer', 'shooting_star', 'at_day_hi', 'at_day_lo', 'rej_day_hi', 'rej_day_lo',
              'break_pdh', 'break_pdl', 'sweep_pdh', 'sweep_pdl', 'sweep_pdh_f', 'sweep_pdl_f', 'sweep_pwl')
     if pat in fixed: return pat
     return f"{pat}_{'bull' if side == 'BUY' else 'bear'}"
-
 
 def check_setup(s, df):
     side = str(s['direction']).upper()
@@ -292,23 +271,13 @@ def check_setup(s, df):
         if filt in df.columns and not bool(df[filt].iloc[-2]): return False
     return True
 
-
-def is_market_neutral(df):
-    last = df.iloc[-2]
-    return (45 <= last['rsi'] <= 55 and
-            abs(last['ema20'] - last['ema50']) / last['close'] < 0.0005 and
-            last['adx'] < 20)
-
-
 def ist_now(): return datetime.now(IST).strftime("%H:%M IST")
-
 
 def calc_lot(entry, sl):
     risk = ACCOUNT_BALANCE * RISK_PER_TRADE
     dist = abs(entry - sl)
     if dist <= 0: return 0.01
     return max(0.01, round(risk / (dist * PIP_VALUE_GOLD), 2))
-
 
 SESSION_IST = {
     'tokyo': '05:30-13:30 IST',
@@ -319,7 +288,6 @@ SESSION_IST = {
     'ny_all': '18:30-02:30 (summer)/19:30-03:30 (winter) IST',
     'all': 'Full day',
 }
-
 
 # ═══════════════════════════════════════════════════════════════
 def detect_signals_once():
@@ -375,7 +343,6 @@ def detect_signals_once():
 
     signals.sort(key=lambda x: x['s'].get('wr', 0), reverse=True)
     return signals
-
 
 def send_full_signal(sig, current_price=None):
     s = sig['s']; side = sig['side']; price = sig['price']
@@ -440,7 +407,6 @@ def send_full_signal(sig, current_price=None):
     )
     send(msg)
 
-
 def send_proximity_alert(sig, current_price):
     side = sig['side']
     entry = sig['price']
@@ -456,7 +422,6 @@ def send_proximity_alert(sig, current_price):
         f"🕐 {ist_now()}"
     )
     send(msg)
-
 
 # ═══════════════════════════════════════════════════════════════
 def run_bot_loop():
@@ -486,36 +451,37 @@ def run_bot_loop():
         print("   No signals at start")
 
     if not signals:
-    return
-        
+        return
 
-    print(f"👁️ Monitor loop for {RUN_DURATION_SEC // 60} min...")
+    print(f"👁 Monitor loop for {RUN_DURATION_SEC // 60} min...")
     last_check = 0
     alerted = set()
 
     while time.time() - start_time < RUN_DURATION_SEC:
         elapsed = time.time() - start_time
         if elapsed - last_check < 60:
-            time.sleep(5); continue
+            time.sleep(5)
+            continue
         last_check = elapsed
 
         cp = get_live_price()
-        if cp is None: continue
+        if cp is None:
+            continue
 
         for sig in signals:
             key = f"{sig['tf']}_{sig['s']['pattern']}_{sig['side']}"
-            if key in alerted: continue
+            if key in alerted:
+                continue
             if abs(cp - sig['price']) < 0.50:
                 send_proximity_alert(sig, cp)
                 alerted.add(key)
 
-
 # ═══════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    print("🚀 Gold Sniper v4.0 starting...")
+    print("🚀 Gold Sniper v4.1 starting...")
     try:
         setups = pd.read_csv("setups.csv")
-        send(f"🤖 Gold Sniper Bot v4\\.0 online\n📋 {len(setups)} setups loaded\n🕐 {ist_now()}")
+        send(f"🤖 Gold Sniper Bot v4\\.1 online\n📋 {len(setups)} setups loaded\n🕐 {ist_now()}")
     except Exception as e:
         send(f"❌ Startup error: {escape_md(str(e))}")
         raise
