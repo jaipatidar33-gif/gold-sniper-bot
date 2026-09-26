@@ -513,7 +513,7 @@ if __name__ == "__main__":
     print("🚀 Gold Sniper v4.0 starting...")
     try:
         setups = pd.read_csv("setups.csv")
-        send(f"🤖 *Gold Sniper Bot v4.0 online*\n📋 {len(setups)} setups loaded\n🕐 {ist_now()}")
+        send(f"🤖 Gold Sniper Bot v4\\.0 online\n📋 {len(setups)} setups loaded\n🕐 {ist_now()}")
     except Exception as e:
         send(f"❌ Startup error: {escape_md(str(e))}")
         raise
