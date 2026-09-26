@@ -24,8 +24,8 @@ TD_KEY   = os.getenv("TD_KEY", "")
 SYMBOLS = {"GOLD": "XAU/USD"}
 IST = timezone(timedelta(hours=5, minutes=30))
 
-ACCOUNT_BALANCE = float(os.getenv("ACCOUNT_BALANCE", "10000"))
-RISK_PER_TRADE  = float(os.getenv("RISK_PER_TRADE", "0.01"))
+ACCOUNT_BALANCE = float(os.getenv("ACCOUNT_BALANCE") or "10000")
+RISK_PER_TRADE  = float(os.getenv("RISK_PER_TRADE") or "0.01")
 PIP_VALUE_GOLD  = 10.0
 
 SL_ATR_MULT = 1.0
