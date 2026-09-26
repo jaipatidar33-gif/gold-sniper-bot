@@ -1,5 +1,6 @@
 """
-GOLD SNIPER BOT — 31 Setups | Gold + Silver
+GOLD SNIPER BOT v2.0
+73 Gold Setups | ATR SL/TP | Telegram Alerts
 """
 import os, time
 from datetime import datetime, timezone, timedelta
@@ -10,6 +11,7 @@ import requests
 TG_TOKEN = os.getenv("TG_TOKEN", "")
 TG_CHAT  = os.getenv("TG_CHAT_ID", "")
 TD_KEY   = os.getenv("TD_KEY", "")
+
 SYMBOLS = {"GOLD": "XAU/USD"}
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -101,6 +103,7 @@ def build_features(df):
     df['ny_am']   = (df['hour'] >= 13) & (df['hour'] < 17)
     df['ny_pm']   = (df['hour'] >= 17) & (df['hour'] < 21)
     df['overlap'] = (df['hour'] >= 13) & (df['hour'] < 16)
+    df['ny_all']  = (df['hour'] >= 13) & (df['hour'] < 21)
     df['all']     = True
 
     df['tue_thu'] = df['dow'].isin([1, 2, 3])
@@ -142,6 +145,19 @@ def build_features(df):
     df['rej_day_hi'] = (df['high'] > df['day_hi'].shift(1)) & (c < df['day_hi'].shift(1))
     df['rej_day_lo'] = (df['low'] < df['day_lo'].shift(1)) & (c > df['day_lo'].shift(1))
 
+    df['sweep_pdh'] = (df['high'] > df['prev_h']) & (c < df['prev_h'])
+    df['sweep_pdl'] = (df['low'] < df['prev_l']) & (c > df['prev_l'])
+    df['break_pdh'] = c > df['prev_h']
+    df['break_pdl'] = c < df['prev_l']
+
+    df['or_hi'] = df.groupby('date')['high'].transform(lambda x: x.head(6).max() if len(x) >= 6 else np.nan)
+    df['or_lo'] = df.groupby('date')['low'].transform(lambda x: x.head(6).min() if len(x) >= 6 else np.nan)
+    df['or_break_up'] = c > df['or_hi']
+    df['or_break_dn'] = c < df['or_lo']
+
+    df['sweep_pdh_f'] = df['sweep_pdh']
+    df['sweep_pdl_f'] = df['sweep_pdl']
+
     df['up_trend'] = (df['ema20'] > df['ema50']) & (df['ema50'] > df['ema200'])
     df['dn_trend'] = (df['ema20'] < df['ema50']) & (df['ema50'] < df['ema200'])
     df['strong_trend'] = df['adx'] > 25
@@ -165,6 +181,7 @@ def build_features(df):
     s50 = c.rolling(50).std()
     df['zscore'] = (c - m50) / s50.replace(0, np.nan)
     df['zscore_low'] = df['zscore'].abs() < 1.0
+    df['zscore_high'] = df['zscore'].abs() > 1.5
 
     df['none'] = True
     return df
@@ -172,7 +189,9 @@ def build_features(df):
 
 def pattern_col(pat, side):
     fixed = ('hammer', 'shooting_star', 'at_day_hi', 'at_day_lo',
-             'rej_day_hi', 'rej_day_lo')
+             'rej_day_hi', 'rej_day_lo', 'or_break_up', 'or_break_dn',
+             'break_pdh', 'break_pdl', 'sweep_pdh', 'sweep_pdl',
+             'sweep_pdh_f', 'sweep_pdl_f')
     if pat in fixed:
         return pat
     return f"{pat}_{'bull' if side == 'BUY' else 'bear'}"
@@ -215,6 +234,7 @@ SESSION_IST = {
     'ny_am': '18:30-22:30 IST',
     'ny_pm': '22:30-02:30 IST',
     'overlap': '18:30-21:30 IST',
+    'ny_all': '18:30-02:30 IST',
     'all': 'Full day',
 }
 
@@ -230,12 +250,18 @@ def run_once():
         try:
             df_5m = build_features(fetch(symbol, "5min", 300))
             df_15m = build_features(fetch(symbol, "15min", 300))
+            df_30m = build_features(fetch(symbol, "30min", 300))
+
             metal_setups = setups[setups['instrument'] == metal]
+            print(f"   {metal}: {len(metal_setups)} setups to check")
 
             for _, s in metal_setups.iterrows():
                 s = s.to_dict()
                 tf = str(s['tf'])
-                df = df_5m if tf == '5m' else df_15m
+                if tf == '5m':   df = df_5m
+                elif tf == '15m': df = df_15m
+                elif tf == '30m': df = df_30m
+                else: continue
 
                 if not check_setup(s, df):
                     continue
@@ -258,7 +284,7 @@ def run_once():
                     tp = price + 1.0 * atr_val if side == 'BUY' else price - 1.0 * atr_val
                     sltp_label = "1xATR / 1xATR (1:1)"
 
-                pip = 0.10 if metal == 'GOLD' else 0.001
+                pip = 0.10
                 limit = price - 5 * pip if side == 'BUY' else price + 5 * pip
 
                 emoji = "🟢" if side == "BUY" else "🔴"
@@ -292,5 +318,6 @@ def run_once():
 
 if __name__ == "__main__":
     print("🚀 Gold Sniper Bot starting...")
-send(f"🤖 *Gold Sniper Bot online* — {len(setups)} setups loaded")
+    setups = pd.read_csv("setups.csv")
+    send(f"🤖 *Gold Sniper Bot online* — {len(setups)} setups loaded")
     run_once()
