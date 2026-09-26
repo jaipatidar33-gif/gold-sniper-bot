@@ -292,5 +292,5 @@ def run_once():
 
 if __name__ == "__main__":
     print("🚀 Gold Sniper Bot starting...")
-    send("🤖 *Gold Sniper Bot online* — 31 setups loaded")
+send(f"🤖 *Gold Sniper Bot online* — {len(setups)} setups loaded")
     run_once()
