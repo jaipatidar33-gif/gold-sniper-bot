@@ -138,16 +138,17 @@ def fetch(symbol, interval, bars=300):
     return df
 
 
-def get_live_price(symbol="GC=F"):
-    if not YF_OK: return None
+def get_live_price(symbol="XAU/USD"):
     try:
-        data = yf.Ticker(symbol).history(period="1d", interval="1m")
-        if len(data) > 0:
-            return float(data['Close'].iloc[-1])
+        r = requests.get("https://api.twelvedata.com/price", params={
+            "symbol": symbol, "apikey": TD_KEY
+        }, timeout=10).json()
+        if "price" in r:
+            return float(r["price"])
+        print(f"[TD PRICE] {r}")
     except Exception as e:
-        print(f"[YF ERROR] {e}")
+        print(f"[TD PRICE ERROR] {e}")
     return None
-
 
 # ═══════════════════════════════════════════════════════════════
 # INDICATORS
